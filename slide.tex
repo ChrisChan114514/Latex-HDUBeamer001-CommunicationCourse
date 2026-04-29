@@ -39,6 +39,14 @@
     dashedarrow/.style={-{Latex[length=2mm]}, thick, dashed, DarkOrange}
 }
 
+\setbeamertemplate{background}{
+    \begin{tikzpicture}[remember picture,overlay]
+        \node[opacity=0.045] at (current page.center) {
+            \includegraphics[width=0.48\paperwidth]{pic/透明校徽.png}
+        };
+    \end{tikzpicture}
+}
+
 \newcommand{\keypoint}[1]{\textcolor{DeepBlue}{\heiti #1}}
 
 \title[CDMA与3G移动通信]{CDMA移动通信与N-CDMA系统}
