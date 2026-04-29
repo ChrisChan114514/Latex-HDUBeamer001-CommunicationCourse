@@ -1,0 +1,676 @@
+\documentclass[aspectratio=169]{beamer}
+\usepackage{ctex}
+\usepackage{hyperref}
+\usepackage[T1]{fontenc}
+\usepackage{latexsym}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{makecell}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,shapes.geometric,calc,fit}
+\usepackage{HDU}
+
+\setbeamertemplate{navigation symbols}{}
+\setbeamersize{text margin left=0.72cm,text margin right=0.72cm}
+\renewcommand{\arraystretch}{1.16}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\newcolumntype{C}{>{\centering\arraybackslash}X}
+
+\definecolor{DeepBlue}{RGB}{6,63,132}
+\definecolor{SoftBlue}{RGB}{232,241,252}
+\definecolor{SoftGreen}{RGB}{233,245,239}
+\definecolor{SoftOrange}{RGB}{255,244,230}
+\definecolor{SoftRed}{RGB}{252,235,234}
+\definecolor{DarkGreen}{RGB}{24,115,75}
+\definecolor{DarkOrange}{RGB}{189,104,26}
+\definecolor{DarkRed}{RGB}{170,52,44}
+
+\tikzset{
+    flowbox/.style={draw=DeepBlue, fill=SoftBlue, rounded corners=2pt, align=center, minimum height=7mm, inner sep=4pt, font=\small},
+    greenbox/.style={draw=DarkGreen, fill=SoftGreen, rounded corners=2pt, align=center, minimum height=7mm, inner sep=4pt, font=\small},
+    orangebox/.style={draw=DarkOrange, fill=SoftOrange, rounded corners=2pt, align=center, minimum height=7mm, inner sep=4pt, font=\small},
+    redbox/.style={draw=DarkRed, fill=SoftRed, rounded corners=2pt, align=center, minimum height=7mm, inner sep=4pt, font=\small},
+    linearrow/.style={-{Latex[length=2mm]}, thick, DeepBlue},
+    dashedarrow/.style={-{Latex[length=2mm]}, thick, dashed, DarkOrange}
+}
+
+\newcommand{\keypoint}[1]{\textcolor{DeepBlue}{\heiti #1}}
+
+\title[CDMA与3G移动通信]{CDMA移动通信与N-CDMA系统}
+\subtitle{无线通信原理及应用第九讲课前任务汇报}
+\author[第九周任务]{第三组汇报}
+\institute[无线通信原理及应用]{无线通信原理及应用}
+\date{2026年4月29日}
+
+\begin{document}
+
+\kaishu
+
+\begin{frame}
+    \titlepage
+    \begin{figure}[htpb]
+        \begin{center}
+            \includegraphics[width=0.22\linewidth]{pic/HDUlogo.pdf}
+        \end{center}
+    \end{figure}
+\end{frame}
+
+\begin{frame}{目录}
+    \tableofcontents[sectionstyle=show,subsectionstyle=show/shaded/hide,subsubsectionstyle=show/shaded/hide]
+\end{frame}
+
+\begin{frame}[t]{本次任务单的主线}
+    \small
+    \begin{columns}[T,totalwidth=\textwidth]
+        \column{0.43\textwidth}
+        \begin{block}{从问题到逻辑}
+            任务单看起来有八个问题，但核心不是背概念，而是顺着一条链路理解：为什么需要CDMA，N-CDMA怎样实现，3G制式又如何演进。
+        \end{block}
+
+        \vspace{0.4em}
+        \begin{alertblock}{汇报重点}
+            本PPT把八个问题归并为四部分：原理、优势、系统与信道、关键技术和3G比较。
+        \end{alertblock}
+
+        \column{0.57\textwidth}
+        \centering
+        \begin{tikzpicture}[node distance=0.38cm, font=\scriptsize]
+            \node[flowbox, text width=0.82\linewidth] (a) {Q1--Q2：CDMA怎样同时通信？为什么比TDMA更灵活？};
+            \node[greenbox, below=of a, text width=0.82\linewidth] (b) {Q3--Q4：系统由哪些网元组成？地址码如何分工？};
+            \node[orangebox, below=of b, text width=0.82\linewidth] (c) {Q5--Q6：正向、反向信道分别承担什么功能？};
+            \node[redbox, below=of c, text width=0.82\linewidth] (d) {Q7--Q8：关键技术是什么？三种3G制式如何比较？};
+            \draw[linearrow] (a) -- (b);
+            \draw[linearrow] (b) -- (c);
+            \draw[linearrow] (c) -- (d);
+        \end{tikzpicture}
+    \end{columns}
+\end{frame}
+
+\section{CDMA基本原理}
+
+\begin{frame}[t]{一、从多址接入看CDMA}
+    \small
+    \begin{columns}[T,totalwidth=\textwidth]
+        \column{0.44\textwidth}
+        \begin{block}{移动通信中的基本矛盾}
+            一个蜂窝小区里有很多用户，但无线频谱有限。多址技术要解决的问题是：\keypoint{让多个用户共享无线资源，同时又能在接收端被区分开。}
+        \end{block}
+
+        \vspace{0.4em}
+        \begin{tabularx}{\linewidth}{>{\heiti}p{0.17\linewidth}Y}
+            \toprule
+            FDMA & 按频率分开，每个用户占不同频带。\\
+            TDMA & 按时间分开，每个用户占不同时间片。\\
+            CDMA & 按码字分开，用户可以同时、同频发送。\\
+            \bottomrule
+        \end{tabularx}
+
+        \column{0.56\textwidth}
+        \centering
+        \begin{tikzpicture}[x=0.92cm,y=0.65cm, font=\scriptsize]
+            \draw[->, thick] (0,0) -- (6.3,0) node[right]{时间};
+            \draw[->, thick] (0,0) -- (0,3.9) node[above]{频率};
+            \draw[fill=SoftBlue, draw=DeepBlue] (0.35,0.35) rectangle (1.75,1.05) node[midway]{用户A};
+            \draw[fill=SoftGreen, draw=DarkGreen] (0.35,1.25) rectangle (1.75,1.95) node[midway]{用户B};
+            \draw[fill=SoftOrange, draw=DarkOrange] (0.35,2.15) rectangle (1.75,2.85) node[midway]{用户C};
+            \node at (1.05,3.35) {FDMA};
+
+            \draw[fill=SoftBlue, draw=DeepBlue] (2.55,0.35) rectangle (3.05,2.85) node[midway, rotate=90]{用户A};
+            \draw[fill=SoftGreen, draw=DarkGreen] (3.12,0.35) rectangle (3.62,2.85) node[midway, rotate=90]{用户B};
+            \draw[fill=SoftOrange, draw=DarkOrange] (3.69,0.35) rectangle (4.19,2.85) node[midway, rotate=90]{用户C};
+            \node at (3.37,3.35) {TDMA};
+
+            \draw[fill=SoftBlue, draw=DeepBlue] (4.95,0.35) rectangle (6.05,2.85);
+            \node[DeepBlue] at (5.50,2.45) {$c_A$};
+            \node[DarkGreen] at (5.50,1.60) {$c_B$};
+            \node[DarkOrange] at (5.50,0.75) {$c_C$};
+            \node at (5.50,3.35) {CDMA};
+        \end{tikzpicture}
+    \end{columns}
+\end{frame}
+
+\begin{frame}[t]{二、CDMA工作原理：扩频与解扩}
+    \small
+    \begin{block}{核心思想}
+        CDMA不是把用户分到不同时间片，而是给每个用户分配不同码字。发送端扩频，接收端用同一码字解扩。
+    \end{block}
+
+    \vspace{-0.6em}
+    \[
+        s_i(t)=b_i(t)c_i(t), \qquad
+        \int c_i(t)c_j(t)\,dt \approx 0\quad(i\neq j)
+    \]
+
+    \vspace{-0.8em}
+    \centering
+    \begin{tikzpicture}[font=\scriptsize, >=Latex, scale=0.88, every node/.append style={transform shape}]
+        \node[flowbox, text width=2.1cm] (data) at (0,0.78) {信息比特\\$b_i(t)$};
+        \node[flowbox, text width=2.1cm] (code) at (0,-0.78) {扩频码\\$c_i(t)$};
+        \node[orangebox, text width=2.0cm] (spread) at (3.0,0) {相乘\\扩频};
+        \node[greenbox, text width=2.3cm] (air) at (6.0,0) {同频发送\\宽带信号};
+        \node[orangebox, text width=2.0cm] (despread) at (8.8,0) {同码相关\\解扩};
+        \node[flowbox, text width=2.1cm] (out) at (11.5,0) {恢复信息\\$\hat b_i(t)$};
+
+        \draw[linearrow] (data.east) -- (spread.west);
+        \draw[linearrow] (code.east) -- (spread.west);
+        \draw[linearrow] (spread.east) -- (air.west);
+        \draw[linearrow] (air.east) -- (despread.west);
+        \draw[linearrow] (despread.east) -- (out.west);
+
+        \node[redbox, text width=9.2cm] at (5.8,-1.78) {异码用户不会被有效解扩，主要表现为背景干扰；同码用户能量被重新集中。};
+    \end{tikzpicture}
+\end{frame}
+
+\begin{frame}[t]{二、CDMA工作原理：接收端如何分离用户}
+    \small
+    \begin{block}{接收端看到的是叠加信号}
+        空中同时存在多个用户信号。接收机只关心目标用户码字，通过相关运算把目标用户“提出来”。
+    \end{block}
+
+    \vspace{-0.1em}
+    \centering
+    \begin{tikzpicture}[font=\scriptsize, >=Latex, scale=0.88, every node/.append style={transform shape}]
+        \node[flowbox, text width=2.2cm] (u1) at (0,1.8) {用户A\\$b_Ac_A$};
+        \node[greenbox, text width=2.2cm] (u2) at (0,0) {用户B\\$b_Bc_B$};
+        \node[orangebox, text width=2.2cm] (u3) at (0,-1.8) {用户C\\$b_Cc_C$};
+        \node[redbox, text width=2.4cm] (sum) at (3.2,0) {空中叠加\\同频信号};
+        \node[flowbox, text width=2.4cm] (corr) at (6.4,0) {用$c_B$相关\\只取用户B};
+        \node[greenbox, text width=2.4cm] (out) at (9.5,0) {输出\\$\hat b_B(t)$};
+        \draw[linearrow] (u1.east) -- (sum.west);
+        \draw[linearrow] (u2.east) -- (sum.west);
+        \draw[linearrow] (u3.east) -- (sum.west);
+        \draw[linearrow] (sum.east) -- (corr.west);
+        \draw[linearrow] (corr.east) -- (out.west);
+        \node[redbox, text width=7.6cm] at (5.0,-2.45) {关键不是“没有干扰”，而是用码相关把目标用户能量集中、把非目标用户压低。};
+    \end{tikzpicture}
+\end{frame}
+
+\begin{frame}[t]{三、CDMA相对TDMA的优势：资源与容量}
+    \small
+    \begin{columns}[T,totalwidth=\textwidth]
+        \column{0.50\textwidth}
+        \begin{block}{TDMA：时间片是硬边界}
+            用户按时隙轮流发送。时隙被占满后，新用户只能等待、重排或拒绝接入。
+        \end{block}
+
+        \begin{tikzpicture}[font=\scriptsize, x=0.78cm, y=0.58cm]
+            \foreach \x/\name/\col in {0/A/SoftBlue,1/B/SoftGreen,2/C/SoftOrange,3/D/SoftRed} {
+                \draw[fill=\col, draw=DeepBlue] (\x,0) rectangle ++(0.8,1.1);
+                \node at (\x+0.4,0.55) {用户\name};
+            }
+            \draw[->, thick] (-0.25,-0.2) -- (4.35,-0.2) node[right]{时间片};
+        \end{tikzpicture}
+
+        \column{0.50\textwidth}
+        \begin{block}{CDMA：容量由总干扰决定}
+            用户同频同时发送。新增用户会抬高干扰水平，系统性能逐步下降，这就是“软容量”。
+        \end{block}
+
+        \begin{tikzpicture}[font=\scriptsize]
+            \node[flowbox, text width=1.8cm] at (0,0.9) {用户A\\$c_A$};
+            \node[greenbox, text width=1.8cm] at (0,-0.1) {用户B\\$c_B$};
+            \node[orangebox, text width=1.8cm] at (0,-1.1) {用户C\\$c_C$};
+            \node[redbox, text width=2.4cm] at (3.4,-0.1) {同一频带\\码字区分};
+            \draw[linearrow] (0.95,0.9) -- (2.1,-0.1);
+            \draw[linearrow] (0.95,-0.1) -- (2.1,-0.1);
+            \draw[linearrow] (0.95,-1.1) -- (2.1,-0.1);
+        \end{tikzpicture}
+    \end{columns}
+
+\end{frame}
+
+\begin{frame}[t]{三、CDMA相对TDMA的优势：移动与抗干扰}
+    \small
+    \begin{columns}[T,totalwidth=\textwidth]
+        \column{0.33\textwidth}
+        \begin{block}{频率复用}
+            相邻小区可使用相同频带，邻区信号主要表现为附加干扰，而不是必须完全避开。
+        \end{block}
+
+        \column{0.33\textwidth}
+        \begin{block}{抗多径}
+            扩频信号配合RAKE接收，可把可分辨多径能量合并，而不是只把多径当成失真。
+        \end{block}
+
+        \column{0.33\textwidth}
+        \begin{block}{软切换}
+            小区边缘可同时保持多个基站链路，先连新链路再释放旧链路，降低掉话概率。
+        \end{block}
+    \end{columns}
+
+    \vspace{0.35em}
+    \centering
+    \begin{tikzpicture}[font=\scriptsize]
+        \node[flowbox, text width=2.4cm] (reuse) at (0,0) {同频复用\\提升频谱效率};
+        \node[greenbox, text width=2.4cm] (rake) at (3.8,0) {RAKE接收\\利用多径能量};
+        \node[orangebox, text width=2.4cm] (soft) at (7.6,0) {软切换\\降低掉话};
+        \node[redbox, text width=3.0cm] (result) at (11.4,0) {蜂窝移动通信\\更稳定、更柔性};
+        \draw[linearrow] (reuse) -- (rake);
+        \draw[linearrow] (rake) -- (soft);
+        \draw[linearrow] (soft) -- (result);
+    \end{tikzpicture}
+\end{frame}
+
+\section{N-CDMA系统与地址码}
+
+\begin{frame}[t]{四、N-CDMA系统构成：网络架构}
+    \small
+    \begin{block}{N-CDMA的理解}
+        这里按课程常见表述，将N-CDMA理解为窄带CDMA蜂窝系统，典型代表是IS-95/cdmaOne。它把扩频、码分、功控和切换机制落到蜂窝网结构中。
+    \end{block}
+
+    \vspace{0.25em}
+    \centering
+    \begin{tikzpicture}[font=\scriptsize, >=Latex]
+        \node[flowbox, text width=2.0cm] (ms1) at (0,1.2) {MS\\移动台};
+        \node[flowbox, text width=2.0cm] (ms2) at (0,-1.2) {MS\\移动台};
+        \node[greenbox, text width=2.0cm] (bts) at (3.0,0) {BTS\\基站};
+        \node[greenbox, text width=2.2cm] (bsc) at (6.0,0) {BSC\\基站控制器};
+        \node[orangebox, text width=2.2cm] (msc) at (9.0,0) {MSC\\移动交换中心};
+        \node[flowbox, text width=2.4cm] (db) at (12.0,1.2) {HLR/VLR/AuC\\用户与鉴权};
+        \node[flowbox, text width=2.4cm] (net) at (12.0,-1.2) {PSTN/Internet\\外部网络};
+        \node[redbox, text width=2.5cm] (omc) at (6.0,-2.25) {OMC\\网管维护};
+
+        \draw[linearrow] (ms1.east) -- node[above]{空中接口} (bts.west);
+        \draw[linearrow] (ms2.east) -- (bts.west);
+        \draw[linearrow] (bts.east) -- (bsc.west);
+        \draw[linearrow] (bsc.east) -- (msc.west);
+        \draw[linearrow] (msc.east) -- (db.west);
+        \draw[linearrow] (msc.east) -- (net.west);
+        \draw[dashedarrow] (omc.north) -- (bsc.south);
+        \draw[dashedarrow] (omc.west) to[bend right=15] (bts.south);
+    \end{tikzpicture}
+\end{frame}
+
+\begin{frame}[t]{四、N-CDMA系统构成：各部分做什么}
+    \centering
+    \begin{tikzpicture}[
+        font=\scriptsize,
+        card/.style={draw=DeepBlue, fill=SoftBlue, rounded corners=2pt, align=left,
+        text width=3.75cm, minimum height=1.34cm, inner sep=5pt}
+    ]
+        \node[card] at (0,1.75) {\heiti MS 移动台\\终端侧设备，完成用户识别、语音/数据编解码、扩频调制和射频收发。};
+        \node[card, fill=SoftGreen, draw=DarkGreen] at (4.65,1.75) {\heiti BTS 基站\\提供无线覆盖，完成扩频发送、解扩接收、导频发送和功率控制闭环。};
+        \node[card, fill=SoftOrange, draw=DarkOrange] at (9.30,1.75) {\heiti BSC 基站控制器\\管理多个基站，负责无线资源分配、切换控制和业务汇聚。};
+
+        \node[card, fill=SoftOrange, draw=DarkOrange] at (0,-0.45) {\heiti MSC 移动交换中心\\完成呼叫接续、交换、漫游管理，并与外部网络互通。};
+        \node[card] at (4.65,-0.45) {\heiti HLR/VLR/AuC\\维护用户资料、位置登记和鉴权信息，让网络知道“是谁、在哪里、能否接入”。};
+        \node[card, fill=SoftRed, draw=DarkRed] at (9.30,-0.45) {\heiti OMC 网管维护\\负责配置、告警、性能监控和维护，是系统运行管理入口。};
+    \end{tikzpicture}
+
+    \vspace{0.35em}
+    \begin{block}{理解方式}
+        MS和BTS负责无线接入，BSC和MSC负责控制与交换，数据库和网管系统负责身份、位置和运行维护。
+    \end{block}
+\end{frame}
+
+\begin{frame}[t]{五、N-CDMA采用的地址码类型}
+    \scriptsize
+    \begin{columns}[T,totalwidth=\textwidth]
+        \column{0.60\textwidth}
+        \renewcommand{\arraystretch}{1.08}
+        \begin{tabularx}{\linewidth}{>{\heiti}p{0.18\linewidth}YY}
+            \toprule
+            码类型 & 主要作用 & 直观理解 \\
+            \midrule
+            Walsh正交码 & 区分同一小区正向链路中的不同信道，也可用于反向正交调制。 & 像互相垂直的标签，理想同步时互不干扰。\\
+            短PN码 & 用于I/Q扩频和小区/扇区识别，不同基站采用不同PN偏置。 & 同一码族错开起点，终端据此找到服务小区。\\
+            长PN码 & 用于加扰、用户识别和反向链路区分移动台。 & 给每个用户叠加更长的伪随机标识。\\
+            \bottomrule
+        \end{tabularx}
+        \renewcommand{\arraystretch}{1.16}
+
+        \vspace{0.25em}
+        \begin{block}{为什么不能只用一种码？}
+            蜂窝系统同时要区分\keypoint{小区、信道和用户}。正交码适合同步场景，PN码适合扩频、识别和加扰。
+        \end{block}
+
+        \column{0.40\textwidth}
+        \centering
+        \begin{tikzpicture}[node distance=0.38cm, scale=0.92, every node/.append style={transform shape}]
+            \node[flowbox, minimum width=0.76\linewidth] (cell) {短PN码\\小区/扇区层面};
+            \node[greenbox, below=of cell, minimum width=0.76\linewidth] (chan) {Walsh码\\信道层面};
+            \node[orangebox, below=of chan, minimum width=0.76\linewidth] (user) {长PN码\\用户层面};
+            \node[redbox, below=of user, minimum width=0.76\linewidth] (rx) {接收端相关检测\\逐层分离目标信号};
+            \draw[linearrow] (cell) -- (chan);
+            \draw[linearrow] (chan) -- (user);
+            \draw[linearrow] (user) -- (rx);
+        \end{tikzpicture}
+    \end{columns}
+\end{frame}
+
+\section{正反向传输信道}
+
+\begin{frame}[t]{六、N-CDMA正向传输信道构成及作用}
+    \scriptsize
+    \begin{columns}[T,totalwidth=\textwidth]
+        \column{0.58\textwidth}
+        \renewcommand{\arraystretch}{1.08}
+        \begin{tabularx}{\linewidth}{>{\heiti}p{0.21\linewidth}Y}
+            \toprule
+            正向信道 & 作用 \\
+            \midrule
+            导频信道 & 连续参考信号，不承载用户数据；用于捕获、同步、信道估计和切换测量。\\
+            同步信道 & 广播系统时间、PN偏置和基本参数，让移动台知道如何进入网络。\\
+            寻呼信道 & 下发寻呼、系统消息和呼叫建立信息，通知移动台有业务到达。\\
+            正向业务信道 & 承载用户语音、数据和必要控制信息，是业务传输的主要通道。\\
+            \bottomrule
+        \end{tabularx}
+        \renewcommand{\arraystretch}{1.16}
+
+        \vspace{0.25em}
+        \begin{block}{正向链路的特点}
+            基站发射端统一同步，因此可以较好地使用Walsh正交码来分隔多个正向信道。
+        \end{block}
+
+        \column{0.42\textwidth}
+        \centering
+        \begin{tikzpicture}[node distance=0.34cm, scale=0.92, every node/.append style={transform shape}]
+            \node[flowbox, minimum width=0.76\linewidth] (bts) {基站BTS};
+            \node[greenbox, below=of bts, minimum width=0.76\linewidth] (pilot) {导频：先让终端找到我};
+            \node[greenbox, below=of pilot, minimum width=0.76\linewidth] (sync) {同步：告诉终端系统时间};
+            \node[orangebox, below=of sync, minimum width=0.76\linewidth] (page) {寻呼：通知业务和系统消息};
+            \node[redbox, below=of page, minimum width=0.76\linewidth] (traffic) {业务：真正传语音/数据};
+            \node[flowbox, below=of traffic, minimum width=0.76\linewidth] (ms) {移动台MS};
+            \draw[linearrow] (bts) -- (pilot);
+            \draw[linearrow] (pilot) -- (sync);
+            \draw[linearrow] (sync) -- (page);
+            \draw[linearrow] (page) -- (traffic);
+            \draw[linearrow] (traffic) -- (ms);
+        \end{tikzpicture}
+    \end{columns}
+\end{frame}
+
+\begin{frame}[t]{七、N-CDMA反向链路：基本特点}
+    \small
+    \begin{columns}[T,totalwidth=\textwidth]
+        \column{0.42\textwidth}
+        \begin{block}{反向链路为什么更难？}
+            多个移动台从不同位置同时向同一基站发送。它们彼此不同步，而且离基站远近不同。
+        \end{block}
+
+        \begin{alertblock}{关键约束}
+            系统必须通过功率控制，让不同移动台到达基站的功率尽量接近，否则近处用户会淹没远处用户。
+        \end{alertblock}
+
+        \column{0.58\textwidth}
+        \centering
+        \begin{tikzpicture}[font=\scriptsize, >=Latex, scale=0.82, every node/.append style={transform shape}]
+            \node[flowbox, text width=2.0cm] (ms1) at (0,1.8) {移动台A\\近};
+            \node[greenbox, text width=2.0cm] (ms2) at (0,0) {移动台B\\中};
+            \node[orangebox, text width=2.0cm] (ms3) at (0,-1.8) {移动台C\\远};
+            \node[redbox, text width=2.4cm] (pc) at (4.2,0) {功率控制\\到达功率接近};
+            \node[flowbox, text width=2.3cm] (bts) at (8.0,0) {BTS\\基站接收};
+
+            \draw[linearrow] (ms1.east) -- node[above, sloped]{降功率} (pc.west);
+            \draw[linearrow] (ms2.east) -- (pc.west);
+            \draw[linearrow] (ms3.east) -- node[below, sloped]{升功率} (pc.west);
+            \draw[linearrow] (pc.east) -- (bts.west);
+        \end{tikzpicture}
+    \end{columns}
+\end{frame}
+
+\begin{frame}[t]{七、N-CDMA反向传输信道构成及作用}
+    \small
+    \begin{columns}[T,totalwidth=\textwidth]
+        \column{0.48\textwidth}
+        \begin{block}{接入信道}
+            移动台还没有专用业务信道时使用。它承担登记、发起呼叫、响应寻呼和发送短控制消息。
+        \end{block}
+
+        \column{0.48\textwidth}
+        \begin{block}{反向业务信道}
+            呼叫或数据业务建立后使用。它承载用户语音、数据以及通话过程中的必要信令。
+        \end{block}
+    \end{columns}
+
+    \vspace{0.6em}
+    \centering
+    \begin{tikzpicture}[font=\scriptsize, >=Latex]
+        \node[flowbox, text width=2.2cm] (idle) at (0,0) {移动台\\待接入};
+        \node[greenbox, text width=2.6cm] (access) at (3.2,0) {接入信道\\登记/呼叫/响应};
+        \node[orangebox, text width=2.6cm] (traffic) at (6.8,0) {反向业务信道\\语音/数据/信令};
+        \node[flowbox, text width=2.2cm] (bts) at (10.2,0) {BTS\\基站};
+        \draw[linearrow] (idle.east) -- (access.west);
+        \draw[linearrow] (access.east) -- (traffic.west);
+        \draw[linearrow] (traffic.east) -- (bts.west);
+    \end{tikzpicture}
+\end{frame}
+
+\section{N-CDMA关键技术}
+
+\begin{frame}[t]{八、N-CDMA关键技术总览}
+    \small
+    \begin{columns}[T,totalwidth=\textwidth]
+        \column{0.50\textwidth}
+        \begin{block}{让用户能同频共存}
+            \keypoint{扩频与解扩}：发送端用高速码扩频，接收端用同码相关恢复目标用户。
+        \end{block}
+
+        \begin{block}{让干扰保持可控}
+            \keypoint{功率控制}：让不同移动台到达基站的功率接近，压制远近效应。
+        \end{block}
+
+        \column{0.50\textwidth}
+        \begin{block}{让多径变成可利用能量}
+            \keypoint{RAKE接收}：分别捕获可分辨多径，再按质量加权合并。
+        \end{block}
+
+        \begin{block}{让移动过程不中断}
+            \keypoint{软切换}：小区边缘先建立新链路，再释放旧链路，降低掉话概率。
+        \end{block}
+    \end{columns}
+\end{frame}
+
+\begin{frame}[t]{八、N-CDMA关键技术如何配合}
+    \small
+    \begin{columns}[T,totalwidth=\textwidth]
+        \column{0.46\textwidth}
+        \begin{block}{底层可靠性}
+            \keypoint{信道编码与交织}给数据加冗余，并把突发错误打散，便于接收端纠错。
+        \end{block}
+
+        \begin{block}{系统干扰管理}
+            \keypoint{语音激活}在用户不说话时降低发送，减少总干扰，提高系统容量。
+        \end{block}
+
+        \begin{block}{接入与小区识别}
+            \keypoint{同步与PN规划}帮助终端找到小区，也避免相邻小区码字混淆。
+        \end{block}
+
+        \column{0.54\textwidth}
+        \centering
+        \begin{tikzpicture}[font=\scriptsize, >=Latex]
+            \node[flowbox, text width=2.4cm] (code) at (0,1.5) {扩频/解扩\\区分用户};
+            \node[greenbox, text width=2.4cm] (power) at (4.0,1.5) {功率控制\\压低干扰};
+            \node[orangebox, text width=2.4cm] (rake) at (0,-0.3) {RAKE接收\\利用多径};
+            \node[redbox, text width=2.4cm] (handoff) at (4.0,-0.3) {软切换\\保持连接};
+            \node[flowbox, text width=5.6cm] (cap) at (2.0,-2.0) {最终目标：容量、可靠性和移动性同时提升};
+            \draw[linearrow] (code) -- (power);
+            \draw[linearrow] (code) -- (rake);
+            \draw[linearrow] (power) -- (handoff);
+            \draw[linearrow] (rake) -- (cap);
+            \draw[linearrow] (handoff) -- (cap);
+        \end{tikzpicture}
+    \end{columns}
+\end{frame}
+
+\begin{frame}[t]{九、功率控制：解决远近效应}
+    \scriptsize
+    \begin{columns}[T,totalwidth=\textwidth]
+        \column{0.48\textwidth}
+        \begin{block}{远近效应}
+            如果近处和远处移动台用相同功率发射，近处信号到达基站会强得多，强用户会成为弱用户的严重干扰。
+        \end{block}
+
+        \vspace{0.1em}
+        \begin{itemize}
+            \item 开环控制：移动台根据接收导频强弱估计初始发射功率。
+            \item 闭环控制：基站快速命令移动台升功率或降功率。
+            \item 目标不是“功率越大越好”，而是\keypoint{刚好够用且不过度干扰别人}。
+        \end{itemize}
+
+        \column{0.52\textwidth}
+        \centering
+        \begin{tikzpicture}[font=\scriptsize, scale=0.82, every node/.append style={transform shape}]
+            \node[flowbox, minimum width=1.8cm] (near) at (0,2.0) {近处MS\\降低功率};
+            \node[flowbox, minimum width=1.8cm] (far) at (0,0.45) {远处MS\\提高功率};
+            \node[greenbox, minimum width=2.1cm] (bts) at (4.7,1.22) {基站BTS\\接收功率接近};
+            \draw[linearrow] (near) -- node[above, sloped]{弱发射} (bts);
+            \draw[linearrow] (far) -- node[below, sloped]{强发射} (bts);
+            \draw[dashedarrow] (bts) to[bend left=18] node[above]{上/下调命令} (near);
+            \draw[dashedarrow] (bts) to[bend right=18] node[below]{上/下调命令} (far);
+            \node[redbox, text width=0.74\linewidth, below=0.55cm of bts] {控制结果：所有用户在基站处“听起来差不多响”，总干扰保持可控};
+        \end{tikzpicture}
+    \end{columns}
+\end{frame}
+
+\begin{frame}[t]{十、RAKE接收与软切换}
+    \scriptsize
+    \begin{columns}[T,totalwidth=\textwidth]
+        \column{0.50\textwidth}
+        \begin{block}{RAKE接收}
+            多径不一定全是坏事。只要不同时延能被分辨，RAKE接收机就能分别捕获主径和反射径，再按质量加权合并。
+        \end{block}
+
+        \centering
+        \begin{tikzpicture}[node distance=0.38cm, font=\scriptsize]
+            \node[flowbox, minimum width=1.6cm] (sig) {接收信号};
+            \node[greenbox, right=0.55cm of sig, yshift=0.55cm, minimum width=1.65cm] (f1) {Finger 1\\主径};
+            \node[greenbox, right=0.55cm of sig, minimum width=1.65cm] (f2) {Finger 2\\反射径};
+            \node[greenbox, right=0.55cm of sig, yshift=-0.55cm, minimum width=1.65cm] (f3) {Finger 3\\迟到径};
+            \node[orangebox, right=0.70cm of f2, minimum width=1.75cm] (comb) {加权合并};
+            \draw[linearrow] (sig) -- (f1);
+            \draw[linearrow] (sig) -- (f2);
+            \draw[linearrow] (sig) -- (f3);
+            \draw[linearrow] (f1) -- (comb);
+            \draw[linearrow] (f2) -- (comb);
+            \draw[linearrow] (f3) -- (comb);
+        \end{tikzpicture}
+
+        \column{0.50\textwidth}
+        \begin{block}{软切换}
+            移动台经过小区边缘时，同时保持多个基站链路。网络比较或合并多个链路质量后，再释放较弱连接。
+        \end{block}
+
+        \centering
+        \begin{tikzpicture}[font=\scriptsize]
+            \node[greenbox, minimum width=1.7cm] (b1) at (0,1.8) {BTS 1};
+            \node[greenbox, minimum width=1.7cm] (b2) at (4.7,1.8) {BTS 2};
+            \node[flowbox, minimum width=1.7cm] (ms) at (2.35,0.35) {移动台};
+            \draw[linearrow] (b1) -- node[below, sloped]{旧链路} (ms);
+            \draw[linearrow] (b2) -- node[below, sloped]{新链路} (ms);
+            \node[redbox, minimum width=0.86\linewidth, below=0.45cm of ms] {先连后断，降低切换掉话概率};
+        \end{tikzpicture}
+    \end{columns}
+\end{frame}
+
+\section{3G代表性制式}
+
+\begin{frame}[t]{十一、3G移动系统三种代表性制式：基础差异}
+    \scriptsize
+    \renewcommand{\arraystretch}{1.10}
+    \begin{tabularx}{\textwidth}{>{\heiti}p{0.16\textwidth}YYY}
+        \toprule
+        制式 & WCDMA & CDMA2000 & TD-SCDMA \\
+        \midrule
+        基本资源 & 5\,MHz FDD宽带直接序列扩频。 & 1.25\,MHz载波起步，可多载波演进。 & TDD时分双工，典型载波约1.6\,MHz。\\
+        演进来源 & GSM/UMTS路线，强调全球漫游和较宽带宽。 & IS-95/N-CDMA平滑升级，重视向后兼容。 & 中国主导提出，突出TDD和智能天线特色。\\
+        上下行关系 & 成对频段，适合上下行较均衡业务。 & 多采用FDD，便于利用原CDMA频谱。 & 同一频段分时隙，可按业务不对称调整。\\
+        \bottomrule
+    \end{tabularx}
+    \renewcommand{\arraystretch}{1.16}
+
+    \vspace{0.45em}
+    \begin{block}{说明}
+        任务单中的“CAMA2000”通常应理解为CDMA2000。三种制式都属于3G代表路线，但频谱组织和演进路径不同。
+    \end{block}
+\end{frame}
+
+\begin{frame}[t]{十二、3G移动系统三种代表性制式：技术侧重点}
+    \scriptsize
+    \renewcommand{\arraystretch}{1.10}
+    \begin{tabularx}{\textwidth}{>{\heiti}p{0.16\textwidth}YYY}
+        \toprule
+        制式 & WCDMA & CDMA2000 & TD-SCDMA \\
+        \midrule
+        同步特点 & 基站间不强制严格同步，系统设计较灵活。 & 常依赖较严格时间同步，便于网络协调。 & TDD要求上下行时隙同步，规划强调时隙配置。\\
+        技术侧重点 & 宽带CDMA、RAKE、软切换、UMTS生态。 & 兼容IS-95、1x语音容量、EV-DO数据增强。 & 智能天线、联合检测、动态信道分配。\\
+        典型优势 & 国际生态和终端支持强，适合全球化部署。 & 旧网升级成本较低，频谱利用平滑。 & 频谱不需要成对，适合上下行业务不对称场景。\\
+        直接理解 & 从GSM体系向宽带CDMA过渡。 & 从窄带CDMA体系逐步升级到3G。 & 利用TDD时隙和智能天线形成差异化路线。\\
+        \bottomrule
+    \end{tabularx}
+    \renewcommand{\arraystretch}{1.16}
+
+    \vspace{0.45em}
+    \begin{block}{比较结论}
+        WCDMA重生态和宽带化，CDMA2000重兼容升级，TD-SCDMA重TDD频谱使用和智能天线特色。
+    \end{block}
+\end{frame}
+
+\begin{frame}[t]{十三、从N-CDMA到3G的演进理解}
+    \scriptsize
+    \begin{columns}[T,totalwidth=\textwidth]
+        \column{0.46\textwidth}
+        \begin{block}{共同点}
+            三种3G制式都在解决同一类问题：提升容量、速率和切换可靠性，同时控制小区间干扰。
+        \end{block}
+
+        \begin{itemize}
+            \item CDMA思想仍然重要：扩频、码分、功控、RAKE和软切换继续发挥作用。
+            \item 不同制式的差异主要来自频谱资源、历史网络和产业路线。
+            \item 3G以后，系统继续向更高数据速率、更强分组业务和更精细的无线资源管理演进。
+        \end{itemize}
+
+        \column{0.54\textwidth}
+        \centering
+        \begin{tikzpicture}[node distance=0.34cm, scale=0.78, every node/.append style={transform shape}]
+            \node[flowbox, text width=0.70\linewidth] (is95) {N-CDMA / IS-95\\窄带CDMA蜂窝系统};
+            \node[greenbox, below left=0.58cm and -0.06cm of is95, minimum width=0.28\linewidth] (w) {WCDMA\\宽带化};
+            \node[orangebox, below=0.58cm of is95, minimum width=0.28\linewidth] (c) {CDMA2000\\兼容升级};
+            \node[redbox, below right=0.58cm and -0.06cm of is95, minimum width=0.28\linewidth] (t) {TD-SCDMA\\TDD特色};
+            \node[flowbox, below=0.95cm of c, text width=0.70\linewidth] (future) {共同目标：容量更高、速率更高、移动性更可靠};
+            \draw[linearrow] (is95) -- (w);
+            \draw[linearrow] (is95) -- (c);
+            \draw[linearrow] (is95) -- (t);
+            \draw[linearrow] (w) -- (future);
+            \draw[linearrow] (c) -- (future);
+            \draw[linearrow] (t) -- (future);
+        \end{tikzpicture}
+    \end{columns}
+\end{frame}
+
+\section{总结}
+
+\begin{frame}[t]{总结（一）：CDMA与N-CDMA}
+    \small
+    \begin{enumerate}
+        \item CDMA的本质是用码字而不是时间或频率来区分用户。
+        \item 与TDMA相比，CDMA更强调软容量、抗多径、软切换和频率复用。
+        \item N-CDMA系统由移动台、基站、基站控制器、交换中心、数据库和网管系统共同构成。
+        \item Walsh码、短PN码和长PN码分别承担信道区分、小区识别、用户识别等任务。
+    \end{enumerate}
+\end{frame}
+
+\begin{frame}[t]{总结（二）：信道、关键技术与3G制式}
+    \small
+    \begin{enumerate}
+        \setcounter{enumi}{4}
+        \item 正向链路重点是导频、同步、寻呼和业务信道；反向链路重点是接入和业务信道。
+        \item 功率控制、RAKE接收、软切换、编码交织、语音激活和同步规划共同支撑系统容量。
+        \item WCDMA、CDMA2000、TD-SCDMA都是3G代表制式，但频谱组织、同步要求和演进路径不同。
+    \end{enumerate}
+\end{frame}
+
+\begin{frame}
+    \centering
+    \vspace{1.6cm}
+    {\Huge 谢谢！}
+\end{frame}
+
+\end{document}

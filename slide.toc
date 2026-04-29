@@ -1,0 +1,6 @@
+\beamer@sectionintoc {1}{CDMA基本原理}{4}{0}{1}
+\beamer@sectionintoc {2}{N-CDMA系统与地址码}{10}{0}{2}
+\beamer@sectionintoc {3}{正反向传输信道}{14}{0}{3}
+\beamer@sectionintoc {4}{N-CDMA关键技术}{18}{0}{4}
+\beamer@sectionintoc {5}{3G代表性制式}{23}{0}{5}
+\beamer@sectionintoc {6}{总结}{27}{0}{6}
